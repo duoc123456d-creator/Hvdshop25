@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shop Game Tự Động - Telegram WebApp</title>
+    <!-- Telegram Web Apps SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        :root {
+            --tg-theme-bg-color: #1a1a2e;
+            --tg-theme-text-color: #ffffff;
+            --tg-theme-hint-color: #a2a2c2;
+            --tg-theme-button-color: #e94560;
+            --tg-theme-button-text-color: #ffffff;
+            --tg-theme-secondary-bg-color: #16162a;
+            --primary-color: #0f3460;
+            --accent-color: #e94560;
+            --success-color: #4e9f3d;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--tg-theme-bg-color);
+            color: var(--tg-theme-text-color);
+            padding-bottom: 20px;
+            font-size: 14px;
+        }
+
+        header {
+            background-color: var(--tg-theme-secondary-bg-color);
+            padding: 20px 15px;
+            text-align: center;
+            border-bottom: 2px solid var(--accent-color);
+        }
+
+        header h1 {
+            font-size: 20px;
+            color: var(--accent-color);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+            text-shadow: 0 0 10px rgba(233, 69, 96, 0.5);
+        }
+
+        header p {
+            font-size: 12px;
+            color: var(--tg-theme-hint-color);
+        }
+
+        .container {
+            padding: 15px;
+        }
+
+        .tabs {
+            display: flex;
+            background: var(--tg-theme-secondary-bg-color);
+            border-radius: 8px;
+            padding: 4px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            background: none;
+            color: var(--tg-theme-hint-color);
+            font-weight: bold;
+            font-size: 13px;
+            cursor: pointer;
+            border-radius: 6px;
+            text-align: center;
+            text-transform: uppercase;
+        }
+
+        .tab-btn.active {
+            background-color: var(--accent-color);
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(233, 69, 96, 0.4);
+        }
+
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        /* Thẻ sản phẩm */
+        .grid-products {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .card-product {
+            background: var(--tg-theme-secondary-bg-color);
+            border-radius: 12px;
+            padding: 15px;
+            border: 1px solid rgba(255,255,255,0.05);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card-product::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 4px; height: 100%;
+            background: var(--accent-color);
+        }
+
+        .prod-badge {
+            font-size: 10px;
+            background: rgba(233, 69, 96, 0.2);
+            color: var(--accent-color);
+            padding: 2px 6px;
+            border-radius: 4px;
+            align-self: flex-start;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        .prod-title {
+            font-size: 15px;
+            font-weight: bold;
+            margin-bottom: 6px;
+        }
+
+        .prod-price {
+            font-size: 16px;
+            color: #ffcc00;
+            font-weight: 800;
+            margin-bottom: 12px;
+        }
+
+        .btn-buy {
+            background: var(--accent-color);
+            color: #fff;
+            border: none;
+            padding: 8px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            text-transform: uppercase;
+            font-size: 12px;
+        }
+
+        /* Hộp thoại thanh toán QR */
+        .qr-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.85);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .qr-box {
+            background: #fff;
+            color: #333;
+            width: 100%;
+            max-width: 320px;
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            position: relative;
+        }
+
+        .qr-box h3 {
+            font-size: 16px;
+            margin-bottom: 10px;
+            color: #111;
+        }
+
+        .qr-code-img {
+            width: 200px;
+            height: 200px;
+            margin: 10px auto;
+            background: #eee;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .qr-code-img img {
+            width: 100%;
+            height: 100%;
+        }
+
+        .payment-info {
+            background: #f5f5f7;
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-size: 13px;
+            text-align: left;
+        }
+
+        .payment-info div {
+            margin-bottom: 4px;
+        }
+
+        .payment-info strong {
+            color: #e94560;
+            font-size: 14px;
+        }
+
+        .btn-close-qr {
+            margin-top: 15px;
+            background: #666;
+            color: #fff;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+            width: 100%;
+        }
+
+        /* Lịch sử kho hàng nhận mã */
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .history-item {
+            background: var(--tg-theme-secondary-bg-color);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 10px;
+            padding: 12px;
+        }
+
+        .hist-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: var(--tg-theme-hint-color);
+            margin-bottom: 8px;
+        }
+
+        .hist-title {
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 6px;
+        }
+
+        .code-display-box {
+            background: rgba(78, 159, 61, 0.15);
+            border: 1px dashed var(--success-color);
+            padding: 8px;
+            border-radius: 6px;
+            color: #69f0ae;
+            font-family: monospace;
+            font-size: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .btn-copy {
+            background: var(--success-color);
+            color: white;
+            border: none;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>🎮 SHOP GAME TỰ ĐỘNG 🎮</h1>
+        <p>Thanh toán siêu tốc - Nhận mã tức thì</p>
+    </header>
+
+    <div class="container">
+        <!-- Tabs Menu Điều hướng -->
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('shop')">Cửa Hàng</button>
+            <button class="tab-btn" onclick="switchTab('inventory')">Kho Thẻ Đã Mua</button>
+        </div>
+
+        <!-- TRANG CỬA HÀNG -->
+        <div id="page-shop" class="page active">
+            <div class="grid-products">
+                <!-- Gói 1 -->
+                <div class="card-product">
+                    <div>
+                        <span class="prod-badge">Kim Cương FF</span>
+                        <div class="prod-title">90 Kim Cương</div>
+                    </div>
+                    <div>
+                        <div class="prod-price">20.000 đ</div>
+                        <button class="btn-buy" onclick="openPayment('90 Kim Cương', 20000)">Mua Ngay</button>
+                    </div>
+                </div>
+
+                <!-- Gói 2 -->
+                <div class="card-product">
+                    <div>
+                        <span class="prod-badge">Kim Cương FF</span>
+                        <div class="prod-title">230 Kim Cương</div>
+                    </div>
+                    <div>
+                        <div class="prod-price">50.000 đ</div>
+                        <button class="btn-buy" onclick="openPayment('230 Kim Cương', 50000)">Mua Ngay</button>
+                    </div>
+                </div>
+
+                <!-- Gói 3 -->
+                <div class="card-product">
+                    <div>
+                        <span class="prod-badge">Thẻ Tuần FF</span>
+                        <div class="prod-title">Vé Ưu Đãi Tuần</div>
+                    </div>
+                    <div>
+                        <div class="prod-price">50.000 đ</div>
+                        <button class="btn-buy" onclick="openPayment('Vé Ưu Đãi Tuần', 50000)">Mua Ngay</button>
+                    </div>
+                </div>
+
+                <!-- Gói 4 -->
+                <div class="card-product">
+                    <div>
+                        <span class="prod-badge">Thẻ Tháng FF</span>
+                        <div class="prod-title">Vé Ưu Đãi Tháng</div>
+                    </div>
+                    <div>
+                        <div class="prod-price">150.000 đ</div>
+                        <button class="btn-buy" onclick="openPayment('Vé Ưu Đãi Tháng', 150000)">Mua Ngay</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TRANG KHO LỊCH SỬ NHẬN THẺ -->
+        <div id="page-inventory" class="page">
+            <div class="history-list" id="history-container">
+                <!-- Item mẫu -->
+                <div class="history-item">
+                    <div class="hist-header">
+                        <span>Đơn hàng: #84920</span>
+                        <span style="color: var(--success-color);">Thành công</span>
+                    </div>
+                    <div class="hist-title">90 Kim Cương</div>
+                    <div class="code-display-box">
+                        <span id="code-sample">REDEEM-FF90-J3K9-LL12</span>
+                        <button class="btn-copy" onclick="copyText('REDEEM-FF90-J3K9-LL12')">Sao chép</button>
+                    </div>
+                </div>
+                
+                <div class="history-item">
+                    <div class="hist-header">
+                        <span>Đơn hàng: #84915</span>
+                        <span style="color: var(--success-color);">Thành công</span>
+                    </div>
+                    <div class="hist-title">Vé Ưu Đãi Tuần</div>
+                    <div class="code-display-box">
+                        <span id="code-sample-2">WEEK-FF-PASS-7810-XX99</span>
+                        <button class="btn-copy" onclick="copyText('WEEK-FF-PASS-7810-XX99')">Sao chép</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- HỘP THOẠI QUÉT MÃ QR NẠP TIỀN -->
+    <div class="qr-overlay" id="qr-modal">
+        <div class="qr-box">
+            <h3 id="qr-title">Thanh Toán Đơn Hàng</h3>
+            <p style="font-size: 11px; color: #666; margin-bottom: 10px;">Vui lòng chuyển khoản đúng số tiền và nội dung để hệ thống duyệt tự động</p>
+            
+            <div class="qr-code-img">
+                <!-- Gọi API VietQR tạo ảnh động dựa trên thông tin nhập vào -->
+                <img id="qr-image" src="" alt="VietQR Code">
+            </div>
+
+            <div class="payment-info">
+                <div>Ngân hàng: <strong>MB BANK</strong></div>
+                <div>Số tài khoản: <strong>099999999999</strong></div>
+                <div>Chủ tài khoản: <strong>NGUYEN VAN A</strong></div>
+                <div>Số tiền: <strong id="qr-amount">0 đ</strong></div>
+                <div>Nội dung CK: <strong id="qr-content" style="background:#ffeb3b; padding:2px 5px; border-radius:4px; color:#000;">GA29104</strong></div>
+            </div>
+
+            <p style="font-size: 11px; color: #4e9f3d; margin-top: 10px; font-weight: bold; animation: blink 1.5s infinite;">
+                ⏳ Hệ thống đang kiểm tra giao dịch tự động...
+            </p>
+
+            <button class="btn-close-qr" onclick="closePayment()">HỦY GIAO DỊCH</button>
+        </div>
+    </div>
+
+    <script>
+        // Cấu hình thông tin tài khoản ngân hàng nhận tiền của bạn tại đây
+        const BANK_ID = "MB"; // Mã ngân hàng (VietinBank, VCB, MB, Techcombank,...)
+        const ACCOUNT_NO = "1234567890"; // Số tài khoản ngân hàng của bạn
+        const ACCOUNT_NAME = "HA VAN DUOC"; // Tên tài khoản không dấu
+
+        const tg = window.Telegram.WebApp;
+        if (tg) {
+            tg.expand();
+        }
+
+        // Chuyển đổi qua lại giữa 2 giao diện Cửa hàng và Kho đồ
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+
+            if (tabName === 'shop') {
+                document.querySelector('.tab-btn:nth-child(1)').classList.add('active');
+                document.getElementById('page-shop').classList.add('active');
+            } else {
+                document.querySelector('.tab-btn:nth-child(2)').classList.add('active');
+                document.getElementById('page-inventory').classList.add('active');
+            }
+        }
+
+        // Bật hộp thoại QR và tự động tạo Link VietQR
+        function openPayment(productName, price) {
+            // Tạo mã nội dung chuyển khoản ngẫu nhiên để phân biệt các đơn hàng (Giúp Auto Duyệt Đơn)
+            const randomCode = "GAME" + Math.floor(100000 + Math.random() * 900000);
+            
+            document.getElementById('qr-title').innerText = "Mua: " + productName;
+            document.getElementById('qr-amount').innerText = price.toLocaleString('vi-VN') + ' đ';
+            document.getElementById('qr-content').innerText = randomCode;
+
+            // Xây dựng URL API VietQR theo tiêu chuẩn NAPAS để sinh mã QR động (chứa sẵn số tiền + nội dung)
+            const qrUrl = `https://img.vietqr.io/image/${BANK_ID}-${ACCOUNT_NO}-qr_only.png?amount=${price}&addInfo=${randomCode}&accountName=${encodeURIComponent(ACCOUNT_NAME)}`;
+            document.getElementById('qr-image').src = qrUrl;
+
+            // Hiển thị khung popup
+            document.getElementById('qr-modal').style.display = 'flex';
+
+            // Mô phỏng đẩy dữ liệu yêu cầu thanh toán sang phía Telegram Bot
+            if (tg && tg.sendData) {
+                const initOrder = {
+                    event: "create_invoice",
+                    product: productName,
+                    amount: price,
+                    code: randomCode
+                };
+                // Gửi tín hiệu để Backend Bot bắt đầu giám sát Webhook tài khoản ngân hàng
+                tg.sendData(JSON.stringify(initOrder));
+            }
+        }
+
+        function closePayment() {
+            document.getElementById('qr-modal').style.display = 'none';
+        }
+
+        // Hàm sao chép nhanh mã thẻ/code game
+        function copyText(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                alert("Đã sao chép mã thẻ vào bộ nhớ tạm!");
+            }).catch(err => {
+                alert("Lỗi sao chép: " + err);
+            });
+        }
+    </script>
+
+    <style>
+        @keyframes blink {
+            0% { opacity: 0.4; }
+            50% { opacity: 1; }
+            100% { opacity: 0.4; }
+        }
+    </style>
+</body>
+</html>
