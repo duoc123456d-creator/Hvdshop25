@@ -439,7 +439,7 @@
         // Bật hộp thoại QR và tự động tạo Link VietQR
         function openPayment(productName, price) {
             // Tạo mã nội dung chuyển khoản ngẫu nhiên để phân biệt các đơn hàng (Giúp Auto Duyệt Đơn)
-            const randomCode = "GAME" + Math.floor(100000 + Math.random() * 900000);
+            const randomCode = "keymigul" + Math.floor(100000 + Math.random() * 900000);
             
             document.getElementById('qr-title').innerText = "Mua: " + productName;
             document.getElementById('qr-amount').innerText = price.toLocaleString('vi-VN') + ' đ';
